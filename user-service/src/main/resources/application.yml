@@ -1,0 +1,41 @@
+server:
+  port: 8050
+
+spring:
+  application:
+    name: user-service  # 服务名称必须与网关路由配置一致
+  datasource:
+    url: jdbc:mysql://localhost:3306/cloud_user?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8
+    username: root
+    password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jackson:
+    serialization:
+      fail-on-empty-beans: false
+    deserialization:
+      fail-on-unknown-properties: false
+
+mybatis:
+  type-aliases-package: cn.edu.sju.ws.userservice.pojo
+  configuration:
+    map-underscore-to-camel-case: true
+
+logging:
+  level:
+    cn.edu.sju.ws: DEBUG
+    org.springframework.web: DEBUG
+    org.mybatis: DEBUG
+  pattern:
+    dateformat: MM-dd HH:mm:ss:SSS
+
+# Eureka客户端配置 - 确保服务能注册到注册中心
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8090/eureka/  # Eureka服务器地址
+    register-with-eureka: true    # 注册到Eureka
+    fetch-registry: true          # 获取注册表信息
+  instance:
+    hostname: localhost
+    prefer-ip-address: true       # 使用IP地址注册
+    instance-id: ${spring.cloud.client.ip-address}:${server.port}  # 实例ID格式

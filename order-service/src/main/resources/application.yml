@@ -1,0 +1,64 @@
+server:
+  port: 8091  # 服务端口
+
+spring:
+  application:
+    name: order-service  # 服务名称，网关根据此名称路由
+  datasource:
+    url: jdbc:mysql://localhost:3306/cloud_order?useSSL=false&serverTimezone=UTC
+    username: root
+    password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  cloud:
+    circuitbreaker:
+      resilience4j:
+        instances:
+          userServiceCircuitBreaker:
+            # 熔断器配置 - 基于计数的滑动窗口
+            sliding-window-type: COUNT_BASED
+            sliding-window-size: 5
+            minimum-number-of-calls: 5
+            wait-duration-in-open-state: 10s
+            failure-rate-threshold: 50
+            permitted-number-of-calls-in-half-open-state: 3
+            automatic-transition-from-open-to-half-open-enabled: true
+            record-exceptions:
+              - java.io.IOException
+              - java.util.concurrent.TimeoutException
+              - org.springframework.web.client.ResourceAccessException
+              - java.lang.Exception
+
+# Eureka客户端配置 - 确保服务注册和发现
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8090/eureka/  # Eureka服务器地址
+    register-with-eureka: true    # 注册到Eureka
+    fetch-registry: true          # 获取服务注册表
+  instance:
+    prefer-ip-address: true       # 使用IP地址注册
+    instance-id: ${spring.cloud.client.ip-address}:${server.port}  # 实例ID格式
+
+# Mybatis配置
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: cn.edu.sju.ws.orderservice.pojo
+
+# Actuator监控端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"  # 暴露所有监控端点
+  endpoint:
+    health:
+      show-details: always  # 显示健康检查详情
+    gateway:
+      enabled: true        # 启用网关端点
+
+# 日志配置
+logging:
+  level:
+    cn.edu.sju.ws.orderservice: DEBUG  # 业务日志级别
+    io.github.resilience4j: DEBUG      # 熔断器日志级别
+    org.springframework.cloud.gateway: DEBUG  # 网关相关日志
